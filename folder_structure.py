@@ -5,8 +5,7 @@
 #  a structure identical with the albuns inside it.
 #
 import json
-import progressbar
-import os
+from pathlib import Path
 import sys
 import sqlite3
 
@@ -29,12 +28,6 @@ IGNORED_FOLDERS = [
     'TrashFolder']
 JSON_FILENAME = "folders.json"
 
-# def print_dict(dicionario):
-#    print("--  Dicionario: --")
-#    for key, val in dicionario.items():
-#        print(key, "=>", val)
-#    print("----------------------------------")
-
 
 def split_path(path):
     folders = path.split('/')
@@ -42,8 +35,7 @@ def split_path(path):
 
 
 def run(lib_dir, output_dir):
-    db_path = os.path.join(lib_dir, 'database')
-    main_db_path = os.path.join(db_path, 'photos.db')
+    main_db_path = Path(lib_dir).resolve() / 'database' / 'photos.db'
 
     main_db = sqlite3.connect(main_db_path)
     main_db.row_factory = sqlite3.Row
@@ -67,38 +59,41 @@ def run(lib_dir, output_dir):
         folder_modelid = folder[FOLDER_MODELID]
 
         # add to dictionary
-        #print("Adicionando... KEY/UUID/NAME/PATH", folder_modelid, folder_uuid, folder_name, folder_path)
         db_folder_dict[folder_modelid] = [
             folder_uuid, folder_name, folder_path]
 
     # Dict ready. Let's substitute the Paths and return a simpler dict
     final_dict = {}
     for key, val in db_folder_dict.items():
-        # get the path in numbers
+        # get the path in numbers as it's on Photos Database
         path_numbered = val[2]
         # the key for the final dict
         key_uuid = val[0]
         name = val[1]
 
-        path_described = ""
-        for number in path_numbered.split('/'):
-            if number != "":                     # the last will always be empty, ignore
+        # in database, the Path separator is always '/'
+        path_db_sep = '/'
+
+        # the path ready with numbers substituted by names
+        path_described = None
+        for number in path_numbered.split(path_db_sep):
+            if number != "":  # the last will always be empty, ignore
                 int_number = int(number)
                 folder_name = db_folder_dict[int_number][1]
                 folder_uuid = db_folder_dict[int_number][0]
                 if folder_uuid not in IGNORED_FOLDERS:
-                    if path_described != "":
-                        path_described += os.path.sep
+                    if path_described is None:
+                        path_described = Path(folder_name)
+                    else:
+                        path_described = path_described / folder_name
 
-                    path_described += folder_name   # Change folder number to Folder name
-                    final_dict[key_uuid] = [name, path_described]
+                    final_dict[key_uuid] = [name, str(path_described)]
 
     #  mount and store final JSON on file
-    json_folders = json.dumps(final_dict)
-    json_path = os.path.join(output_dir, JSON_FILENAME)
-    json_file = open(json_path, "w")
-    json_file.write(json_folders)
-    json_file.close()
+    json_dump = json.dumps(final_dict)
+    json_file = Path(output_dir) / JSON_FILENAME
+    json_file.open(mode='w')
+    json_file.write_text(json_dump)
 
 
 # Usage: ./folder_structure.py <photo_library> <output_dir>

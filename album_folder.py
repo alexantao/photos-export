@@ -6,16 +6,17 @@ import os
 import sys
 import time
 import datetime
+from pathlib import Path
+import collections
 from argparse import ArgumentParser
 from shutil import copyfile
 from shutil import move
 
+# the files generated before
 SYSTEM_FILES = ["albums.json", "folders.json"]
 
 # Source_dir : passed as parameter, where your photos are located
-# output_dir : directory under where all albuns will be created
-
-
+# output_dir : directory under where all albums will be created
 def run(source_dir, output_dir, verbose):
     def vprint(x):
         if verbose:
@@ -23,8 +24,9 @@ def run(source_dir, output_dir, verbose):
 
     bar = progressbar.ProgressBar()
 
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+    output_path = Path(output_dir)
+    if not output_path.is_dir():
+        output_path.mkdir(parents=True)
 
     # Let's print some statistics
     num_of_missing = 0
@@ -33,12 +35,16 @@ def run(source_dir, output_dir, verbose):
     num_of_moved = 0
     num_of_json = 0
 
-    all_files = os.listdir(source_dir)
-    num_of_total_files = len(all_files)
+    number_of_json_files = int(collections.Counter(p.suffix for p in Path.cwd().glob('*.json'))['.json'])
+
+    #all_files = os.listdir(source_dir)
+    #num_of_total_files = len(all_files)
 
     # load albums and folders data file
-    albums_path = os.path.join(source_dir, SYSTEM_FILES[0])
-    folders_path = os.path.join(source_dir, SYSTEM_FILES[1])
+    #albums_path = os.path.join(source_dir, SYSTEM_FILES[0])
+    #folders_path = os.path.join(source_dir, SYSTEM_FILES[1])
+    albums_path = Path(source_dir, SYSTEM_FILES[0])
+    folders_path = Path(source_dir, SYSTEM_FILES[1])
 
     try:
         albums_file = open(albums_path)
