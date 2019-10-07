@@ -19,6 +19,8 @@ TRASH_FIELD = "isInTrash"
 MODELID_FIELD = "modelId"
 
 FOLDER_FIELD = "folderUuid"
+ROOT_FOLDER = "TopLevelAlbums"
+
 
 # Ignore all albuns inside these folders. consider only user created
 IGNORED_FOLDERS_ALBUNS = [
@@ -38,25 +40,22 @@ def run(lib_dir, output_dir):
 
     # Get all albums information
     album_table = main_db.cursor()
-    album_table.execute('SELECT * FROM ' + ALBUM_TABLE)
+    album_table.execute('SELECT * FROM ' + ALBUM_TABLE + ' WHERE ' + TRASH_FIELD + '=0')
 
     # will store uuid -> [name, folder]
     db_album_dict = {}
 
     # let's test each album
     for album in iter(album_table.fetchone, None):
-        # Ignore Trashed albums
-        if album[TRASH_FIELD] == 1:
-            continue
 
         album_name = album[NAME_FIELD]
         album_uuid = album[UUID_FIELD]
         album_folder = album[FOLDER_FIELD]
+        album_folder = album_folder.replace(ROOT_FOLDER, "")
 
         # add to dictionary
-        if album_folder not in IGNORED_FOLDERS_ALBUNS and album_name is not None:
-            album_folder_normalized = Path(album_folder)  # will remove invalid chars to create the albuns later
-            db_album_dict[album_uuid] = [album_name, str(album_folder_normalized)]
+        if album_name is not None:
+            db_album_dict[album_uuid] = [album_name, str(Path(album_folder))]
 
     # print_dict(db_album_dict)
 

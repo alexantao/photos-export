@@ -40,18 +40,14 @@ def run(lib_dir, output_dir):
     main_db = sqlite3.connect(main_db_path)
     main_db.row_factory = sqlite3.Row
 
-    # PASSO1: Pega a tabela de todas as pastas
     folders_table = main_db.cursor()
-    folders_table.execute('SELECT * FROM ' + FOLDER_TABLE)
+    folders_table.execute('SELECT * FROM ' + FOLDER_TABLE + ' WHERE isInTrash=0')
 
     # will store modelID -> [FOLDERNAME, PATH]
     db_folder_dict = {}
 
     # PASSO2: Para cada pasta listada,
     for folder in iter(folders_table.fetchone, None):
-        # Ignore Trashed Folders
-        if folder[TRASH_FIELD] == 1:
-            continue
 
         folder_path = folder[FOLDER_PATH_FIELD]
         folder_name = folder[NAME_FIELD]
