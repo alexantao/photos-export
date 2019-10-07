@@ -21,26 +21,22 @@ MODELID_FIELD = "modelId"
 FOLDER_FIELD = "folderUuid"
 ROOT_FOLDER = "TopLevelAlbums"
 
-
-# Ignore all albuns inside these folders. consider only user created
-IGNORED_FOLDERS_ALBUNS = [
-    'LibraryFolder',
-    'TopLevelAlbums',
-    'MediaTypesSmartAlbums',
-    'TopLevelSlideshows',
-    'TrashFolder']
 JSON_FILENAME = "albums.json"
 
 
 def run(lib_dir, output_dir):
     main_db_path = Path(lib_dir).resolve() / 'database' / 'photos.db'
 
-    main_db = sqlite3.connect(main_db_path)
-    main_db.row_factory = sqlite3.Row
+    try:
+        main_db = sqlite3.connect(main_db_path)
+        main_db.row_factory = sqlite3.Row
 
-    # Get all albums information
-    album_table = main_db.cursor()
-    album_table.execute('SELECT * FROM ' + ALBUM_TABLE + ' WHERE ' + TRASH_FIELD + '=0')
+        # Get all albums information
+        album_table = main_db.cursor()
+        album_table.execute('SELECT * FROM ' + ALBUM_TABLE + ' WHERE ' + TRASH_FIELD + '=0')
+    except sqlite3.Error as error:
+        print("Error on DATABASE: ", error)
+        sys.exit(1)
 
     # will store uuid -> [name, folder]
     db_album_dict = {}
@@ -51,13 +47,11 @@ def run(lib_dir, output_dir):
         album_name = album[NAME_FIELD]
         album_uuid = album[UUID_FIELD]
         album_folder = album[FOLDER_FIELD]
-        album_folder = album_folder.replace(ROOT_FOLDER, "")
+        album_folder = album_folder.replace(ROOT_FOLDER, "")  #TopLevelAlbums will be output_dir
 
-        # add to dictionary
+        # add to dictionary, album without a name is ignored
         if album_name is not None:
             db_album_dict[album_uuid] = [album_name, str(Path(album_folder))]
-
-    # print_dict(db_album_dict)
 
     #  mount and store final JSON on file
     json_dump = json.dumps(db_album_dict)

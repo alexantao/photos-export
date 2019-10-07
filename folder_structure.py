@@ -26,6 +26,7 @@ IGNORED_FOLDERS = [
     'MediaTypesSmartAlbums',
     'TopLevelSlideshows',
     'TrashFolder']
+
 JSON_FILENAME = "folders.json"
 
 
@@ -37,18 +38,20 @@ def split_path(path):
 def run(lib_dir, output_dir):
     main_db_path = Path(lib_dir).resolve() / 'database' / 'photos.db'
 
-    main_db = sqlite3.connect(main_db_path)
-    main_db.row_factory = sqlite3.Row
+    try:
+        main_db = sqlite3.connect(main_db_path)
+        main_db.row_factory = sqlite3.Row
 
-    folders_table = main_db.cursor()
-    folders_table.execute('SELECT * FROM ' + FOLDER_TABLE + ' WHERE isInTrash=0')
+        folders_table = main_db.cursor()
+        folders_table.execute('SELECT * FROM ' + FOLDER_TABLE + ' WHERE isInTrash=0')
+    except sqlite3.Error as error:
+        print("Error on DATABASE: ", error)
+        sys.exit(1)
 
     # will store modelID -> [FOLDERNAME, PATH]
     db_folder_dict = {}
 
-    # PASSO2: Para cada pasta listada,
     for folder in iter(folders_table.fetchone, None):
-
         folder_path = folder[FOLDER_PATH_FIELD]
         folder_name = folder[NAME_FIELD]
         folder_uuid = folder[UUID_FIELD]
@@ -58,7 +61,7 @@ def run(lib_dir, output_dir):
         db_folder_dict[folder_modelid] = [
             folder_uuid, folder_name, folder_path]
 
-    # Dict ready. Let's substitute the Paths and return a simpler dict
+    # Dict ready. Let's substitute the Paths and return a dict with complete pathnames
     final_dict = {}
     for key, val in db_folder_dict.items():
         # get the path in numbers as it's on Photos Database
@@ -67,10 +70,8 @@ def run(lib_dir, output_dir):
         key_uuid = val[0]
         name = val[1]
 
-        # in database, the Path separator is always '/'
-        path_db_sep = '/'
+        path_db_sep = '/'        # in database, the Path separator is always '/'
 
-        # the path ready with numbers substituted by names
         path_described = None
         for number in path_numbered.split(path_db_sep):
             if number != "":  # the last will always be empty, ignore

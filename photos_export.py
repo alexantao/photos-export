@@ -8,6 +8,7 @@ import folder_structure
 import group_versions
 import album_folder
 import sys
+import os
 
 
 def output(thing):
