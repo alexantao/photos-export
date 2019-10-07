@@ -64,7 +64,7 @@ def run(source_dir, output_dir, verbose):
     bar.start()
     for json_file in source_path.glob('[!albums,!folders]*.json'):
         num_of_json += 1
-        bar.update(num_of_json-1)
+        bar.update(num_of_json)
 
         with json_file.open(mode='r') as data_file:
             json_data = json.load(data_file)
