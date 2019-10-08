@@ -8,11 +8,12 @@ import folder_structure
 import group_versions
 import album_folder
 import sys
-import os
+from pathlib import Path
 
 
 def output(thing):
     print('>>> %s' % thing)
+
 
 def askyesno():
     answer = None
@@ -25,32 +26,34 @@ def askyesno():
         else:
             print("Please enter yes or no.")
 
-def run(lib_dir, output_dir):
-    temp_dir = os.path.join(output_dir, "temporaryfolder")
 
-    output('Extracting photos')
-    extract_photos.run(lib_dir, temp_dir)
+def run(lib_dir, output_dir):
+    temp_path = Path(output_dir) / "tempdirectory"
+
+    output('Extracting photos from Photos DB to temp Dir: {}'.format(temp_path))
+    extract_photos.run(lib_dir, temp_path)
 
     output('Cleaning album names')
-    clean_albums.run(temp_dir)
+    clean_albums.run(temp_path)
 
-    output('Setting EXIF metadata')
-    set_exif.run(temp_dir)
+    output('Setting EXIF metadata on files')
+    set_exif.run(temp_path)
 
-    output("ONLY FOR DIGIKAM USERS !\nDo you want to Group Versions ? You need to run Digikam and configure repository first !")
+    output(
+        "ONLY FOR DIGIKAM USERS !\nDo you want to Group Versions ? You need to run Digikam and configure repository "
+        "first !")
     if askyesno():
-        output('Setting EXIF metadata')
-        group_versions.run(temp_dir)
+        output('Grouping Versions for DIGIKAM users')
+        group_versions.run(temp_path)
 
-    output('Exporting Folder Structure')
-    folder_structure.run(lib_dir, temp_dir)
+    output('Extracting Folder Structure information from Photos DB')
+    folder_structure.run(lib_dir, temp_path)
 
-    output('Exporting Albums Structure Information')
-    albums_data.run(lib_dir, temp_dir)
+    output('Extracting Albums Structure information from Photos DB')
+    albums_data.run(lib_dir, temp_path)
 
     output('Moving Photos to final destination.')
-    album_folder.run(temp_dir, output_dir)
-
+    album_folder.run(temp_path, output_dir)
 
 
 # Usage: ./photos_export.py <photo_library> <output_dir>
