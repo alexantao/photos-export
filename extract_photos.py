@@ -1,21 +1,23 @@
 #! /usr/bin/env python3
 
 import sys
-import os
 import sqlite3
 import json
 import progressbar
 import shutil
+from pathlib import Path
 
 global count
+
 
 # Generates a unique suffix
 def gen_name():
     count = 0
     while True:
         path = yield
-        original_name = os.path.splitext(
-            os.path.basename(path))[0]
+        # original_name = os.path.splitext(
+        #    os.path.basename(path))[0]
+        original_name = Path(path).stem
         name = '%s_%010d' % (original_name.replace(' ', '_'), count)
         count += 1
         yield name
@@ -32,9 +34,11 @@ def next_name(path, namer):
 
 
 def run(lib_dir, output_dir):
-    db_path = os.path.join(lib_dir, 'database')
-    main_db_path = os.path.join(db_path, 'photos.db')
-    proxy_db_path = os.path.join(db_path, 'photos.db')
+    lib_path = Path(lib_dir).resolve()
+    output_path = Path(output_dir).resolve()
+
+    main_db_path = lib_path.resolve() / 'database' / 'photos.db'
+    proxy_db_path = lib_path.resolve() / 'database' / 'photos.db'
 
     main_db = sqlite3.connect(main_db_path)
     main_db.row_factory = sqlite3.Row
@@ -59,24 +63,21 @@ def run(lib_dir, output_dir):
     #            subdir, images[0])
 
     c = main_db.cursor()
-    c.execute('SELECT COUNT(*) from RKMaster')
+    c.execute('SELECT COUNT(*) from RKMaster where isInTrash=0')
     (number_of_rows,) = c.fetchone()
-    c.execute('SELECT * FROM RKMaster')
+    c.execute('SELECT * FROM RKMaster where isInTrash=0')
 
     bar = progressbar.ProgressBar(maxval=number_of_rows)
 
     for master in bar(iter(c.fetchone, None)):
         master_uuid = master['uuid']
-        master_path = os.path.join(lib_dir, 'Masters', master['imagePath'])
+        # master_path = os.path.join(lib_dir, 'Masters', master['imagePath'])
+        master_path = Path(lib_dir) / 'Masters' / master['imagePath']
         latitude = None
         longitude = None
         master_albums = set([])
         master_keywords = set([])
         master_rating = None
-
-        # ignore image if it is in trash
-        if master['isInTrash']:
-            continue
 
         vc = main_db.cursor()
         vc.execute('SELECT * FROM RKVersion WHERE masterUuid=? and isInTrash=0', [master_uuid])
@@ -86,17 +87,13 @@ def run(lib_dir, output_dir):
             edited_path = []
             is_master = False
 
-            # ignore if version was deleted of Library
-            #if version['isInTrash'] == 1:
-            #   continue
-
             if version['adjustmentUuid'] != 'UNADJUSTEDNONRAW':
                 ac = proxy_db.cursor()
                 ac.execute('SELECT * FROM RKModelResource WHERE resourceTag=?',
                            [version['adjustmentUuid']])
                 for resource in iter(ac.fetchone, None):
                     if resource['attachedModelType'] == 2 and resource[
-                            'resourceType'] == 4:
+                        'resourceType'] == 4:
                         if len(edited_path) != 0:
                             pass
                             # print("Warning! Multiple valid edits!")
@@ -170,54 +167,49 @@ def run(lib_dir, output_dir):
 
         master_data = {
             'uuid': iuuid,
-            'path': master_path,
+            'path': str(master_path),
             'in_library': master_in_library,
             'albums': list(master_albums),
             'keywords': list(master_keywords),
             'rating': master_rating,
             'latitude': latitude,
             'longitude': longitude}
-        # print(edited_paths)
+
         if unadjusted_count != 0 and unadjusted_count != 1:
             # print("Warning! %d unadjusted images!" % unadjusted_count)
             pass
 
         # create output_dir if not exists
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir, exist_ok=True)
+        if not output_path.is_dir():
+            output_path.mkdir(exist_ok=True, parents=True)
 
-        if os.path.isfile(master_path):
+        if master_path.is_file():
             # Export!
-            base_export_path = os.path.join(output_dir, iuuid)
+            base_export_path = output_path / iuuid
             # Copy the master
             shutil.copy2(
                 master_path,
-                os.path.join(
-                   output_dir,
-                   iuuid +
-                   os.path.splitext(master_path)[1].lower()))
-            # Write the data
-            with open(os.path.join(output_dir, '%s.json' % iuuid), 'w') as log_file:
-                print(
-                    json.dumps(
-                        dict(master_data, derived_from=None)),
-                    file=log_file)
-            # Copy the edits
-            #edit_export_path = os.path.join(base_export_path, 'edited')
-            for edit_info in edited_paths:
-                shutil.copy2(
-                    edit_info['path'],
-                    os.path.join(
-                        output_dir,
-                        '%s%s' %
-                        (edit_info['uuid'],
-                         os.path.splitext(edit_info['path'])[1].lower())))
+                (output_path / iuuid).with_suffix(master_path.suffix.lower()))
 
-                with open(os.path.join(output_dir, '%s.json' % edit_info['uuid']), 'w') as log_file:
-                    print(
-                        json.dumps(
-                            dict(edit_info, derived_from=iuuid)),
-                        file=log_file)
+            # Write the data
+            #json_dump = json.dumps(dict(master_data, derived_from=None))
+            json_dump = json.dumps(master_data)
+            json_file = (output_path / iuuid).with_suffix('.json')
+            json_file.open(mode='w')
+            json_file.write_text(json_dump)
+
+            # Copy the edits
+            # edit_export_path = os.path.join(base_export_path, 'edited')
+            for edit_info in edited_paths:
+                edited_path_origin = Path(edit_info['path'])
+                edited_path_destin = (output_path / edit_info['uuid']).with_suffix(edit_info['path'][1].lower())
+                shutil.copy2(edited_path_origin, edited_path_destin)
+
+                #json_dump = json.dumps(dict(edit_info, derived_from=iuuid))
+                json_dump = json.dumps(edit_info)
+                json_file = (output_path / edit_info['uuid']).with_suffix('.json')
+                json_file.open(mode='w')
+                json_file.write_text(json_dump)
 
     main_db.close()
     proxy_db.close()

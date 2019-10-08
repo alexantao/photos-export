@@ -9,7 +9,6 @@ from pathlib import Path
 import collections
 from argparse import ArgumentParser
 from shutil import copyfile
-from shutil import move
 
 # the files generated before
 SYSTEM_FILES = ["albums.json", "folders.json"]
@@ -55,12 +54,11 @@ def run(source_dir, output_dir, verbose):
         folders_dict = json.load(folders_file)
     except BaseException:
         print(
-            "Error loading Albums or Folders system file.\n\t",
+            "Error loading Albums or Folders system file. Please, run those scripts first.\n\t",
             albums_path,
             folders_path)
         sys.exit(1)
 
-    # TODO: Reinclude bar function
     bar.start()
     for json_file in source_path.glob('[!albums,!folders]*.json'):
         num_of_json += 1
@@ -76,8 +74,7 @@ def run(source_dir, output_dir, verbose):
             # This is the ORIGINAL file name
             file_original_name = Path(json_data['path'])
 
-            # the file must be located with the json file, copied from
-            # extract_photos.py
+            # the file must be located with the json file, copied from extract_photos.py
             imagesource = source_path / file_exported_name
             imagesource = imagesource.with_suffix(file_original_name.suffix.lower())
 
@@ -109,7 +106,9 @@ def run(source_dir, output_dir, verbose):
 
                 for album_id in json_data['albums']:
                     album_name = albums_dict[album_id][0]
-                    album_name = album_name.replace("/", '_')  # replace Albums chars "/" with "_". Path object may interpret it as a path
+                    # replace Albums chars "/" with "_". Path object may
+                    # interpret it as par of a path
+                    album_name = album_name.replace("/", '_')
 
                     # mount the final path of the Album, based in its UUID.
                     # get the folder path from folders dict
