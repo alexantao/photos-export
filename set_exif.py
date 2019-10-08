@@ -4,11 +4,11 @@ import exiftool
 import json
 import sys
 import progressbar
-import os
+from pathlib import Path
+
 
 # Copies metadata from the sidecar JSON into the file EXIF
 # Copies: GPS data, rating, and albums and keywords (as tags)
-
 
 def run(root):
     with exiftool.ExifTool() as et:
@@ -42,28 +42,37 @@ def run(root):
             try:
                 et.execute_json(*(opts + [img]))
                 raise RuntimeError
-            except (ValueError):
+            except ValueError:
                 pass
 
-        bar = progressbar.ProgressBar()
-        for f in bar(os.listdir(root)):
-            if os.path.splitext(f)[1] != '.json':
-                json_file = os.path.join(
-                    root, os.path.splitext(f)[0] + '.json')
-                img_file = os.path.join(root, f)
-                with open(json_file) as data_file:
-                    data = json.load(data_file)
-                    opts = []
-                    if data['latitude'] is not None and data[
-                            'longitude'] is not None:
-                        opts += gps_opts(float(data['latitude']),
-                                         float(data['longitude']))
-                    opts += tag_opts(data['keywords'])
-                    opts += tag_opts(data['albums'])
-                    opts += rating_opts(int(data['rating'] or 0))
-                    if len(opts) != 0:
-                        exec_opts(opts +
-                                  ['-overwrite_original_in_place', '-P'], img_file)
+        source_path = Path(root).resolve()
+
+        images_files = [e for e in source_path.iterdir() if not e.suffix == '.json']
+        number_of_image_files = len(images_files)
+
+        bar = progressbar.ProgressBar(maxval=number_of_image_files)
+        bar.start()
+        num_processed = 0
+
+        for image_file in images_files:  # get first NOT JSON file (image, supose)
+
+            json_file = image_file.with_suffix('.json')
+            with json_file.open(mode='r') as data_file:
+                data = json.load(data_file)
+                opts = []
+                if data['latitude'] is not None and data[
+                    'longitude'] is not None:
+                    opts += gps_opts(float(data['latitude']),
+                                     float(data['longitude']))
+                opts += tag_opts(data['keywords'])
+                opts += tag_opts(data['albums'])
+                opts += rating_opts(int(data['rating'] or 0))
+                if len(opts) != 0:
+                    exec_opts(opts +
+                              ['-overwrite_original_in_place', '-P'], str(image_file))
+
+                num_processed += 1
+                bar.update(num_processed)
 
 
 # Usage: ./set_exif.py <output_dir>
