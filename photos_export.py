@@ -9,6 +9,7 @@ import group_versions
 import album_folder
 import sys
 from pathlib import Path
+from argparse import ArgumentParser
 
 
 def output(thing):
@@ -41,7 +42,7 @@ def run(lib_dir, output_dir, digikam_dir):
 
     if digikam_dir is not None:
         output('Grouping Versions...')
-        group_versions.run(digikam_dir, temp_dir)
+        group_versions.run(digikam_dir, temp_path)
 
     output('Extracting Folder Structure information from Photos DB')
     folder_structure.run(lib_dir, temp_path)
@@ -51,6 +52,7 @@ def run(lib_dir, output_dir, digikam_dir):
 
     output('Moving Photos to final destination.')
     album_folder.run(temp_path, output_dir)
+
 
 # Usage: ./photos_export.py <photo_library> <output_dir> <digikam_dir>
 # digikam_dir may be any dir, if you want to ignore it.
