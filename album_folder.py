@@ -21,10 +21,9 @@ def run(source_dir, output_dir, verbose):
         if verbose:
             print(x)
 
-
     source_path = Path(source_dir)
     if not source_path.is_dir():
-        print("Source directory not found: ", source_dir)
+        print(f'Source directory not found: {source_dir}')
         sys.exit(1)
 
     output_path = Path(output_dir)
@@ -38,7 +37,8 @@ def run(source_dir, output_dir, verbose):
     num_of_moved = 0
     num_of_json = 0
 
-    number_of_json_files = int(collections.Counter(p.suffix for p in source_path.glob('[!albums,!folders]*.json'))['.json'])
+    number_of_json_files = int(
+        collections.Counter(p.suffix for p in source_path.glob('[!albums,!folders]*.json'))['.json'])
 
     bar = progressbar.ProgressBar(maxval=number_of_json_files)
 
@@ -53,10 +53,7 @@ def run(source_dir, output_dir, verbose):
         folders_file = open(folders_path)
         folders_dict = json.load(folders_file)
     except BaseException:
-        print(
-            "Error loading Albums or Folders system file. Please, run those scripts first.\n\t",
-            albums_path,
-            folders_path)
+        print(f'Error loading Albums or Folders system file. Please, run those scripts first.')
         sys.exit(1)
 
     bar.start()
@@ -75,31 +72,31 @@ def run(source_dir, output_dir, verbose):
             file_original_name = Path(json_data['path'])
 
             # the file must be located with the json file, copied from extract_photos.py
-            imagesource = source_path / file_exported_name
-            imagesource = imagesource.with_suffix(file_original_name.suffix.lower())
+            image_source = source_path / file_exported_name
+            image_source = image_source.with_suffix(file_original_name.suffix.lower())
 
             # Some photos do no have any albums included in. So, on those cases,
             # we have just to copy to destination dir.
-            # Those photos whose have albuns, will be treated later
+            # Those photos whose have albums, will be treated later
             # number of albums, to copy to various albums
             number_of_albums = len(json_data['albums'])
 
-            if not imagesource.is_file():  # sourcefile missing... does nothing
-                vprint('Missing File: {}'.format(imagesource))
+            if not image_source.is_file():  # sourcefile missing... does nothing
+                vprint(f'Missing File: {image_source}')
                 num_of_missing += 1
                 continue
 
             if number_of_albums == 0:
                 # destination without album
-                imagedestination = output_path / file_original_name.name
+                image_destination = output_path / file_original_name.name
 
-                if imagedestination.is_file():  # if dest file exists, if assumes name with suffix
+                if image_destination.is_file():  # if dest file exists, if assumes name with suffix
                     print(file_exported_name)
-                    imagedestination = (output_path / file_exported_name).with_suffix(file_original_name.suffix)
+                    image_destination = (output_path / file_exported_name).with_suffix(file_original_name.suffix)
 
                 # move the file to ROOT of output_dir
-                vprint('Moving : {} -> {}'.format(imagesource, imagedestination))
-                imagesource.replace(imagedestination)
+                vprint(f'Moving : {image_source} -> {image_destination}')
+                image_source.replace(image_destination)
                 num_of_moved += 1
             else:  # this is where the photo is included in some album
                 # get the list of all albums UUIDs the photo is included
@@ -110,50 +107,47 @@ def run(source_dir, output_dir, verbose):
                     # interpret it as par of a path
                     album_name = album_name.replace("/", '_')
 
-                    # mount the final path of the Album, based in its UUID.
-                    # get the folder path from folders dict
+                    # get the folder path for the album
                     folder_id = albums_dict[album_id][1]
                     if folder_id == "":  # ex.: TopLevelFolders, removed in albums_data.py
-                        album_folder = "."  # set to root of outputdir
+                        album_folder = "."  # set to root of output_dir
                     else:
                         album_folder = folders_dict[folder_id][1]
 
-                    album_fullpath = output_path / album_folder / album_name
+                    album_full_path = output_path / album_folder / album_name
 
-                    if not album_fullpath.exists():
+                    if not album_full_path.exists():
                         # Create the album on destination directory
-                        album_fullpath.mkdir(exist_ok=True)
+                        album_full_path.mkdir(exist_ok=True)
                         num_of_albuns += 1
 
-                    imagedestination = album_fullpath / file_original_name.name
-                    if imagedestination.is_file():  # if dest file exists, if assumes exported name
-                        imagedestination = (album_fullpath / file_exported_name).with_suffix(file_original_name.suffix)
+                    image_destination = album_full_path / file_original_name.name
+                    if image_destination.is_file():  # if dest file exists, if assumes exported name
+                        image_destination = (album_full_path / file_exported_name).with_suffix(
+                            file_original_name.suffix)
 
                     if album_counter == number_of_albums:
-                        vprint(
-                            'Moving : {} -> {}'.format(imagesource, imagedestination))
+                        vprint(f'Moving : {image_source} -> {image_destination}')
                         # this is the last album, so, move the file
-                        imagesource.replace(imagedestination)
+                        image_source.replace(image_destination)
                         num_of_moved += 1
                     else:
-                        vprint(
-                            'Copying: {} -> {}'.format(imagesource, imagedestination))
-                        copyfile(imagesource, imagedestination)
+                        vprint(f'Copying: {image_source} -> {image_destination}')
+                        copyfile(image_source, image_destination)
                         album_counter += 1
                         num_of_copied += 1
 
-    vprint('Total files to process: {}'.format(number_of_json_files))
-    vprint('JSON files: {}'.format(num_of_json))
-    vprint('Number of missing files: {}'.format(num_of_missing))
-    vprint('Total albums created: {}'.format(num_of_albuns))
-    vprint('Total files moved: {}'.format(num_of_moved))
-    vprint('Total files duplicated to albuns: {}'.format(num_of_copied))
+    vprint(f'Total files to process: {number_of_json_files}')
+    vprint(f'JSON files: {num_of_json}')
+    vprint(f'Number of missing files: {num_of_missing}')
+    vprint(f'Total albums created: {num_of_albuns}')
+    vprint(f'Total files moved: {num_of_moved}')
+    vprint(f'Total files duplicated to albuns: {num_of_copied}')
 
 
 # Usage: ./album_folder <source_dir> <output_dir>
 # Copies all files from source_dir to a folder-based map structure in output_dir
-# Useful for programs like Plex, who expect a folder-based structure for
-# pictures
+# Useful for programs like Plex, who expect a folder-based structure for pictures
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument(
@@ -170,12 +164,11 @@ if __name__ == '__main__':
 
     try:
         args = parser.parse_args()
-    except BaseException:
+    except Exception:
         sys.exit(2)
 
     start_time = time.time()
     run(args.source_dir, args.output_dir, args.verbose)
     end_time = time.time()
 
-    print("\n-----  Time of processing: {}  -----".format(
-        datetime.timedelta(seconds=end_time - start_time)))
+    print(f'\n-----  Time of processing: {datetime.timedelta(seconds=end_time - start_time)}  -----')
