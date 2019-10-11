@@ -9,7 +9,6 @@ from pathlib import Path
 
 global count
 
-
 # Generates a unique suffix
 def gen_name():
     count = 0
@@ -73,6 +72,7 @@ def run(lib_dir, output_dir):
         master_path = Path(lib_dir) / 'Masters' / master['imagePath']
         latitude = None
         longitude = None
+        title = ""
         master_albums = set([])
         master_keywords = set([])
         master_rating = None
@@ -90,8 +90,7 @@ def run(lib_dir, output_dir):
                 ac.execute('SELECT * FROM RKModelResource WHERE resourceTag=?',
                            [version['adjustmentUuid']])
                 for resource in iter(ac.fetchone, None):
-                    if resource['attachedModelType'] == 2 and resource[
-                        'resourceType'] == 4:
+                    if resource['attachedModelType'] == 2 and resource['resourceType'] == 4:
                         if len(edited_path) != 0:
                             pass
                             # print("Warning! Multiple valid edits!")
@@ -186,7 +185,6 @@ def run(lib_dir, output_dir):
 
         if master_path.is_file():
             # Export!
-            base_export_path = output_path / iuuid
             # Copy the master
             shutil.copy2(
                 master_path,

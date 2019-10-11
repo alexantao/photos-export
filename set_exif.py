@@ -41,9 +41,9 @@ def run(root):
                 '-XMP:RatingPercent=%i' %
                 rating_map[rating]]
 
-        def exec_opts(opts, img):
+        def exec_opts(options, img):
             try:
-                et.execute_json(*(opts + [img]))
+                et.execute_json(*(options + [img]))
                 raise RuntimeError
             except ValueError:
                 pass
@@ -63,8 +63,7 @@ def run(root):
             with json_file.open(mode='r') as data_file:
                 data = json.load(data_file)
                 opts = []
-                if data['latitude'] is not None and data[
-                    'longitude'] is not None:
+                if data['latitude'] is not None and data['longitude'] is not None:
                     opts += gps_opts(float(data['latitude']),
                                      float(data['longitude']))
                 opts += tag_opts(data['keywords'])
