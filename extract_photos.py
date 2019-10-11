@@ -15,8 +15,6 @@ def gen_name():
     count = 0
     while True:
         path = yield
-        # original_name = os.path.splitext(
-        #    os.path.basename(path))[0]
         original_name = Path(path).stem
         name = '%s_%010d' % (original_name.replace(' ', '_'), count)
         count += 1
@@ -107,6 +105,8 @@ def run(lib_dir, output_dir):
             latitude = version['latitude']
             longitude = version['longitude']
 
+            title = version['name']
+
             kc = main_db.cursor()
             kc.execute('SELECT * FROM RKAlbumVersion WHERE versionId=?',
                        [version['modelId']])
@@ -166,6 +166,7 @@ def run(lib_dir, output_dir):
         iuuid = next_name(master_path, namer)
 
         master_data = {
+            'title': title,
             'uuid': iuuid,
             'path': str(master_path),
             'in_library': master_in_library,
@@ -192,7 +193,7 @@ def run(lib_dir, output_dir):
                 (output_path / iuuid).with_suffix(master_path.suffix.lower()))
 
             # Write the data
-            #json_dump = json.dumps(dict(master_data, derived_from=None))
+            # json_dump = json.dumps(dict(master_data, derived_from=None))
             json_dump = json.dumps(master_data)
             json_file = (output_path / iuuid).with_suffix('.json')
             json_file.open(mode='w')
@@ -205,7 +206,7 @@ def run(lib_dir, output_dir):
                 edited_path_destin = (output_path / edit_info['uuid']).with_suffix(edit_info['path'][1].lower())
                 shutil.copy2(edited_path_origin, edited_path_destin)
 
-                #json_dump = json.dumps(dict(edit_info, derived_from=iuuid))
+                # json_dump = json.dumps(dict(edit_info, derived_from=iuuid))
                 json_dump = json.dumps(edit_info)
                 json_file = (output_path / edit_info['uuid']).with_suffix('.json')
                 json_file.open(mode='w')
