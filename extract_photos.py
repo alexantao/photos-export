@@ -74,6 +74,7 @@ def run(lib_dir, output_dir):
         latitude = None
         longitude = None
         title = ""
+        comments = ""
         master_albums = set([])
         master_keywords = set([])
         master_rating = None
@@ -106,6 +107,8 @@ def run(lib_dir, output_dir):
             longitude = version['longitude']
 
             title = version['name']
+            comments = version['extendedDescription']
+
 
             kc = main_db.cursor()
             kc.execute('SELECT * FROM RKAlbumVersion WHERE versionId=?',
@@ -167,6 +170,7 @@ def run(lib_dir, output_dir):
 
         master_data = {
             'title': title,
+            'comments': comments,
             'uuid': iuuid,
             'path': str(master_path),
             'in_library': master_in_library,

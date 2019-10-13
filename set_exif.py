@@ -28,7 +28,14 @@ def run(root):
             return list(foo)
 
         def title_opts(title):
-            return ["-XMP:Caption=%s" % title]
+            return ['-XMP:Caption=%s' % title,
+                    '-XMP:Title=%s' % title]
+
+        def comments_opts(comments):
+            return ['-XMP:"Image Description"=%s' % comments,
+                    '-XMP:Notes=%s' % comments,
+                    '-XMP:Description=%s' % comments
+                    ]
 
         def tag_opts(tags):
             return list(map(lambda x: "-XMP:TagsList='%s'" % x, tags))
@@ -70,6 +77,7 @@ def run(root):
                 opts += tag_opts(data['albums'])
                 opts += rating_opts(int(data['rating'] or 0))
                 opts += title_opts(data['title'])
+                opts += comments_opts(data['comments'])
 
                 if len(opts) != 0:
                     exec_opts(opts +
