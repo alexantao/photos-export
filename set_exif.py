@@ -32,8 +32,7 @@ def run(root):
                     '-XMP:Title=%s' % title]
 
         def comments_opts(comments):
-            return ['-XMP:"Image Description"=%s' % comments,
-                    '-XMP:Notes=%s' % comments,
+            return ['-XMP:Notes=%s' % comments,
                     '-XMP:Description=%s' % comments
                     ]
 
