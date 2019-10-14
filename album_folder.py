@@ -91,7 +91,6 @@ def run(source_dir, output_dir, verbose):
                 image_destination = output_path / file_original_name
 
                 if image_destination.is_file():  # if dest file exists, if assumes name with suffix
-                    print(file_exported_name)
                     image_destination = (output_path / file_exported_name).with_suffix(file_original_name.suffix)
 
                 # move the file to ROOT of output_dir
@@ -117,7 +116,7 @@ def run(source_dir, output_dir, verbose):
 
                     if not album_full_path.exists():
                         # Create the album on destination directory
-                        album_full_path.mkdir(exist_ok=True)
+                        album_full_path.mkdir(exist_ok=True, parents=True)
                         num_of_albuns += 1
 
                     image_destination = album_full_path / file_original_name
