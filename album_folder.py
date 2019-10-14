@@ -68,12 +68,12 @@ def run(source_dir, output_dir, verbose):
             # This is the physical exported file
             file_exported_name = json_data['uuid']
 
-            # This is the ORIGINAL file name SEM PATH
-            file_original_name = Path(json_data['path']).name
+            # This is the ORIGINAL file name COM PATH
+            file_original_path = Path(json_data['path'])
 
             # the file must be located with the json file, copied from extract_photos.py
             image_source = source_path / file_exported_name
-            image_source = image_source.with_suffix(file_original_name.suffix.lower())
+            image_source = image_source.with_suffix(file_original_path.suffix.lower())
 
             # Some photos do no have any albums included in. So, on those cases,
             # we have just to copy to destination dir.
@@ -88,10 +88,10 @@ def run(source_dir, output_dir, verbose):
 
             if number_of_albums == 0:
                 # destination without album
-                image_destination = output_path / file_original_name
+                image_destination = output_path / file_original_path.name
 
                 if image_destination.is_file():  # if dest file exists, if assumes name with suffix
-                    image_destination = (output_path / file_exported_name).with_suffix(file_original_name.suffix)
+                    image_destination = (output_path / file_exported_name).with_suffix(file_original_path.suffix)
 
                 # move the file to ROOT of output_dir
                 vprint(f'Moving : {image_source} -> {image_destination}')
@@ -119,10 +119,10 @@ def run(source_dir, output_dir, verbose):
                         album_full_path.mkdir(exist_ok=True, parents=True)
                         num_of_albuns += 1
 
-                    image_destination = album_full_path / file_original_name
+                    image_destination = album_full_path / file_original_path.name
                     if image_destination.is_file():  # if dest file exists, if assumes exported name
                         image_destination = (album_full_path / file_exported_name).with_suffix(
-                            file_original_name.suffix)
+                            file_original_path.suffix)
 
                     if album_counter == number_of_albums:
                         vprint(f'Moving : {image_source} -> {image_destination}')
