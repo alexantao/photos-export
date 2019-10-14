@@ -20,6 +20,7 @@ This program takes an Apple Photos (_not_ iPhoto) database and exports all the
 pictures in it while preserving:
 
 * GPS location data
+* Title
 * Albums (as tags)
 * Keywords (as tags)
 * Rating (Favorite photos get 5 of rating. Others get 0)
