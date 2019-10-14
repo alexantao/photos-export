@@ -27,6 +27,7 @@ JSON_FILENAME = "albums.json"
 
 def run(lib_dir, output_dir):
     main_db_path = Path(lib_dir).resolve() / 'database' / 'photos.db'
+    output_path = Path(output_dir).resolve()
 
     try:
         main_db = sqlite3.connect(main_db_path)
@@ -56,7 +57,7 @@ def run(lib_dir, output_dir):
 
     #  mount and store final JSON on file
     json_dump = json.dumps(db_album_dict)
-    json_file = Path(output_dir) / JSON_FILENAME
+    json_file = output_path / JSON_FILENAME
     json_file.open(mode='w')
     json_file.write_text(json_dump)
 

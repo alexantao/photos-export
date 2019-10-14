@@ -21,12 +21,12 @@ def run(source_dir, output_dir, verbose):
         if verbose:
             print(x)
 
-    source_path = Path(source_dir)
+    source_path = Path(source_dir).resolve()
     if not source_path.is_dir():
         print(f'Source directory not found: {source_dir}')
         sys.exit(1)
 
-    output_path = Path(output_dir)
+    output_path = Path(output_dir).resolve()
     if not output_path.is_dir():
         output_path.mkdir(parents=True)
 
@@ -107,7 +107,7 @@ def run(source_dir, output_dir, verbose):
 
                     # get the folder path for the album
                     folder_id = albums_dict[album_id][1]
-                    if folder_id == "":  # ex.: TopLevelFolders, removed in albums_data.py
+                    if folder_id == "" or folder_id == ".":  # ex.: TopLevelFolders, removed in albums_data.py
                         album_folder = "."  # set to root of output_dir
                     else:
                         album_folder = folders_dict[folder_id][1]
