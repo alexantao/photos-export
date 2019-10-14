@@ -38,10 +38,14 @@ def run(lib_dir, output_dir):
     main_db_path = lib_path.resolve() / 'database' / 'photos.db'
     proxy_db_path = lib_path.resolve() / 'database' / 'photos.db'
 
-    main_db = sqlite3.connect(main_db_path)
-    main_db.row_factory = sqlite3.Row
-    proxy_db = sqlite3.connect(proxy_db_path)
-    proxy_db.row_factory = sqlite3.Row
+    try:
+        main_db = sqlite3.connect(main_db_path)
+        main_db.row_factory = sqlite3.Row
+        proxy_db = sqlite3.connect(proxy_db_path)
+        proxy_db.row_factory = sqlite3.Row
+    except sqlite3.Error as error:
+        print("Error on DATABASE: ", error)
+        sys.exit(1)
 
     namer = gen_name()
 
@@ -69,7 +73,6 @@ def run(lib_dir, output_dir):
 
     for master in bar(iter(c.fetchone, None)):
         master_uuid = master['uuid']
-        # master_path = os.path.join(lib_dir, 'Masters', master['imagePath'])
         master_path = Path(lib_dir) / 'Masters' / master['imagePath']
         latitude = None
         longitude = None
