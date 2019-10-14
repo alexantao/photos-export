@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+from argparse import ArgumentParser
 
 import exiftool
 import json
@@ -88,4 +89,16 @@ def run(root):
 
 # Usage: ./set_exif.py <output_dir>
 if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument(
+        'output_dir',
+        help='Path of where your photos were exported.')
+
+    try:
+        args = parser.parse_args()
+    except Exception as error:
+        print("Argument error: ", error)
+        sys.exit(2)
+
+    run(args.photo_library, args.output_dir)
     run(sys.argv[1])

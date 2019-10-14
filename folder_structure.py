@@ -5,6 +5,7 @@
 #  a structure identical with the albuns inside it.
 #
 import json
+from argparse import ArgumentParser
 from pathlib import Path
 import sys
 import sqlite3
@@ -44,8 +45,8 @@ def run(lib_dir, output_dir):
 
         folders_table = main_db.cursor()
         folders_table.execute('SELECT * FROM ' + FOLDER_TABLE + ' WHERE isInTrash=0')
-    except sqlite3.Error as error:
-        print("Error on DATABASE: ", error)
+    except sqlite3.Error as dberror:
+        print("Error on DATABASE: ", dberror)
         sys.exit(1)
 
     # will store modelID -> [FOLDERNAME, PATH]
@@ -95,4 +96,18 @@ def run(lib_dir, output_dir):
 
 # Usage: ./folder_structure.py <photo_library> <output_dir>
 if __name__ == '__main__':
-    run(sys.argv[1], sys.argv[2])
+    parser = ArgumentParser()
+    parser.add_argument(
+        'photo_library',
+        help='Path of your Photo.app Library')
+    parser.add_argument(
+        'output_dir',
+        help='Path to where the resulting file will be written.')
+
+    try:
+        args = parser.parse_args()
+    except Exception as error:
+        print("Argument error: ", error)
+        sys.exit(2)
+
+    run(args.photo_library, args.output_dir)

@@ -3,12 +3,15 @@
 import sys
 import sqlite3
 import json
+from argparse import ArgumentParser
+
 import progressbar
 import shutil
 
 from pathlib import Path
 
 global count
+
 
 # Generates a unique suffix
 def gen_name():
@@ -111,7 +114,6 @@ def run(lib_dir, output_dir):
 
             title = version['name']
             comments = version['extendedDescription']
-
 
             kc = main_db.cursor()
             kc.execute('SELECT * FROM RKAlbumVersion WHERE versionId=?',
@@ -224,4 +226,18 @@ def run(lib_dir, output_dir):
 
 # Usage: ./extract_photos.py <photo_library> <output_dir>
 if __name__ == '__main__':
-    run(sys.argv[1], sys.argv[2])
+    parser = ArgumentParser()
+    parser.add_argument(
+        'photo_library',
+        help='Path of your Photo.app Library')
+    parser.add_argument(
+        'output_dir',
+        help='Path to where the resulting file will be written.')
+
+    try:
+        args = parser.parse_args()
+    except Exception as error:
+        print("Argument error: ", error)
+        sys.exit(2)
+
+    run(args.photo_library, args.output_dir)
