@@ -4,24 +4,21 @@ import json
 from pathlib import Path
 
 import progressbar
-import os
 import sys
 import sqlite3
-import glob
 from argparse import ArgumentParser
+
 
 # Digikam format
 # edited_id original_id 2
 
 # Determine the ID of an image in the Digikam database
-
-
 def image_id(db, name):
     c = db.cursor()
-    c.execute('SELECT * FROM Images WHERE name=?', name)
+    c.execute(f'SELECT * FROM Images WHERE name={name}')
     rows = c.fetchall()
     if len(rows) != 1:
-        raise RuntimeError('Too many matches for "%s": %i' % (name, len(rows)))
+        raise RuntimeError(f'Too many matches for "{name}": {len(rows)}')
     return rows[0]['id']
 
 
@@ -53,7 +50,6 @@ def run(digikam_dir, photos_dir):
                 edited_id = image_id(db, photo_file.name)
 
                 possible_originals = photo_file.glob(photos_path / (derived_from + ".*"))
-
                 possible_originals_json = [
                     item for item in possible_originals if item.suffix != '.json']
 
@@ -62,9 +58,7 @@ def run(digikam_dir, photos_dir):
                         'Ambiguous match: %s', possible_originals_json)
                 original_id = image_id(db, possible_originals_json[0])
                 c = db.cursor()
-                c.execute(
-                    'INSERT INTO ImageRelations VALUES (?, ?, ?)', [
-                        edited_id, original_id, 2])
+                c.execute(f'INSERT INTO ImageRelations VALUES ({edited_id}, {original_id}, 2)')
     db.commit()
     db.close()
 

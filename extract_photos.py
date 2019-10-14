@@ -215,7 +215,7 @@ def run(lib_dir, output_dir):
                 shutil.copy2(edited_path_origin, edited_path_destin)
 
                 # json_dump = json.dumps(dict(edit_info, derived_from=iuuid))
-                json_dump = json.dumps(edit_info)
+                json_dump = json.dumps(dict(edit_info, derived_from=iuuid))
                 json_file = (output_path / edit_info['uuid']).with_suffix('.json')
                 json_file.open(mode='w')
                 json_file.write_text(json_dump)

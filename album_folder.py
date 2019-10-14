@@ -68,8 +68,8 @@ def run(source_dir, output_dir, verbose):
             # This is the physical exported file
             file_exported_name = json_data['uuid']
 
-            # This is the ORIGINAL file name
-            file_original_name = Path(json_data['path'])
+            # This is the ORIGINAL file name SEM PATH
+            file_original_name = Path(json_data['path']).name
 
             # the file must be located with the json file, copied from extract_photos.py
             image_source = source_path / file_exported_name
@@ -88,7 +88,7 @@ def run(source_dir, output_dir, verbose):
 
             if number_of_albums == 0:
                 # destination without album
-                image_destination = output_path / file_original_name.name
+                image_destination = output_path / file_original_name
 
                 if image_destination.is_file():  # if dest file exists, if assumes name with suffix
                     print(file_exported_name)
@@ -100,7 +100,6 @@ def run(source_dir, output_dir, verbose):
                 num_of_moved += 1
             else:  # this is where the photo is included in some album
                 # get the list of all albums UUIDs the photo is included
-
                 for album_id in json_data['albums']:
                     album_name = albums_dict[album_id][0]
                     # replace Albums chars "/" with "_". Path object may
@@ -121,7 +120,7 @@ def run(source_dir, output_dir, verbose):
                         album_full_path.mkdir(exist_ok=True)
                         num_of_albuns += 1
 
-                    image_destination = album_full_path / file_original_name.name
+                    image_destination = album_full_path / file_original_name
                     if image_destination.is_file():  # if dest file exists, if assumes exported name
                         image_destination = (album_full_path / file_exported_name).with_suffix(
                             file_original_name.suffix)
